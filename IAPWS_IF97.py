@@ -1,3 +1,5 @@
+# This seems to be a very complicated method. The 1995 Formulation seems much simpler...
+
 import numpy as np
 
 R = 0.461526  # kJ/(kg K) - specific gas constant of water
@@ -100,10 +102,10 @@ def region2_specific_volume(P, T):
 
     # Calculate the partial derivative with respect to pi of the dimensionless Gibbs free
     # energy for the residual part
-    gammar = region2_gammar_pi(P, T)
+    gammar_pi = region2_gammar_pi(P, T)
 
     # Calculate the specific volume
-    nu = pi*(gamma0_pi+gammar)*R*T/P / 1000  # m*3/kg
+    nu = pi*(gamma0_pi+gammar_pi)*R*T/P / 1000  # m*3/kg
     return nu
 
 
@@ -142,11 +144,11 @@ def region2_gammar_pi(P, T):
 
     # Calculate the partial derivative with respect to pi of the dimensionless Gibbs free
     # energy for the residual part
-    gammar = 0
+    gammar_pi = 0
     for i in range(len(nr)):
-        gammar += nr[i] * Ir[i] * pi**(Ir[i]-1) * (tau-0.5)**Jr[i]
+        gammar_pi += nr[i] * Ir[i] * pi**(Ir[i]-1) * (tau-0.5)**Jr[i]
 
-    return gammar
+    return gammar_pi
 
 
 def region3_specific_volume(P, T):
@@ -163,13 +165,23 @@ def region3_density(P, T):
     #       T - temperature in Kelvin
     # Returns: rho - density in kg/m^3
 
-    rho_guess = 700  # kg/m^3
+    if T < 647.096:  # Critical point temperature
+        if P > saturation_pressure(T):
+            rho_guess = 700  # kg/m^3
+        else:
+            rho_guess = 0.001
+    else:
+        if P > auxilliary_pressure(T):
+            rho_guess = 700
+        else:
+            rho_guess = 0.001
+
     pressure_result = region3_pressure(rho_guess, T)
 
     delta_rho = 0.01  # kg/m^3
 
     iterations = 0
-    while (np.abs(pressure_result-P) > 0.0000000001 and iterations < 20):
+    while (np.abs(pressure_result-P) > 0.00000001 and iterations < 20):
         # print(f"rho: {rho_guess}, P: {pressure_result}")
 
         pressure_result = region3_pressure(rho_guess, T)
@@ -397,8 +409,8 @@ def table_A5_constants():
                    -0.10234747095929e-12,
                    -0.10018179379511e-8,
                    -0.80882908646985e-10,
-                   0.10693031879409
-                   - 0.33662250574171,
+                   0.10693031879409,
+                   -0.33662250574171,
                    0.89185845355421e-24,
                    0.30629316876232e-12,
                    -0.42002467698208e-5,

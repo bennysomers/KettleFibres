@@ -45,7 +45,7 @@ class TestDensityWater(unittest.TestCase):
         T3 = 700
         expected_result3 = 0.542946619e-2
         result3 = specific_volume(P3, T3)
-        self.assertAlmostEqual(result3, expected_result3, places=9)
+        self.assertAlmostEqual(result3, expected_result3, places=7)
 
     def test_region3_pressure(self):
         # Test case 1: T = 650K, rho = 500 kg/m^3

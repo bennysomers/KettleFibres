@@ -1,5 +1,5 @@
 import numpy as np
-import IAPWS_IF97 as iapws
+import IAPWS_IF97 as if97
 
 
 def refractive_index_thormahlen(rho, T, lamda):
@@ -37,12 +37,12 @@ def refractive_index_thormahlen(rho, T, lamda):
     lamdastar = lamda/lamda_NA
     T = T/T0
 
-    Rm = a[0]/(lamdastar**2-a[1]) + a[2] + \
+    R = a[0]/(lamdastar**2-a[1]) + a[2] + \
         (a[3] + a[4]*lamdastar + a[5]*lamdastar**2 + a[6]*lamdastar**3 + a[7]*lamdastar**4)*lamdastar**2 + \
         a[8]/rhostar + (a[9] + a[10]*lamdastar + a[11]*lamdastar**2) * \
         lamdastar**2*T + (a[12] + a[13]*lamdastar)*lamdastar*T**2
 
-    n = np.sqrt((1+2*Rm*rho) / (1-Rm*rho))
+    n = np.sqrt((1+2*R*rhostar) / (1-R*rhostar))
     return n
 
 
@@ -71,7 +71,7 @@ def refractive_index_R9_97(P, T, wavelength):
     Tstar = 273.15  # K
     lamdastar = 0.5893  # um
 
-    rho = iapws.density(P, T)
+    rho = if97.density(P, T)
 
     Tbar = T / Tstar
     rhobar = rho / rhostar
@@ -88,16 +88,13 @@ def refractive_index_R9_97(P, T, wavelength):
 def main():
     P = 30  # MPa
     T = 700-273.15  # degrees Celsius
-    wavelength = 589.32  # nm
+    lamda = 589.32  # nm
 
-    density = iapws.determine_density(P, T)
+    rho = if97.density(P, T)
 
-    Rm = density_refraction(density, T, wavelength)
-    refractive_index = calculate_refractive_index(density, Rm)
+    n = refractive_index_thormahlen(rho, T, lamda)
 
-    print(f"density: {density}")
-    print(f"Rm: {Rm}")
-    print(f"refractive index: {refractive_index}")
+    print(f"refractive index: {n}")
 
 
 if __name__ == "__main__":
