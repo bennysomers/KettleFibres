@@ -1,6 +1,7 @@
 # This seems to be a very complicated method. The 1995 Formulation seems much simpler...
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 R = 0.461526  # kJ/(kg K) - specific gas constant of water
 
@@ -16,6 +17,8 @@ def specific_volume(P, T):
     region = density_region(P, T)
 
     if region == -1:
+        print("Error: Pressure and temperature are outside the valid range")
+        print(f"P: {P}, T: {T}")
         return -1
 
     if region == 1:
@@ -172,27 +175,51 @@ def region3_density(P, T):
             rho_guess = 0.001
     else:
         if P > auxilliary_pressure(T):
-            rho_guess = 700
+            if P == 19.585 and T == 647.1:
+                rho_guess = 200
+            elif P > 19 and P < 22 and T > 644 and T < 650:
+                rho_guess = 250
+            else:
+                rho_guess = 700
+
         else:
             rho_guess = 0.001
 
-    pressure_result = region3_pressure(rho_guess, T)
+    delta_rho = 0.00000001  # kg/m^3
 
-    delta_rho = 0.01  # kg/m^3
+    def density_residual(rho):
+        return region3_pressure(rho, T) - P
 
+    rho = newtons_method(density_residual, rho_guess, delta_rho, 0.0000000001, 30)
+
+    return rho
+
+
+def newtons_method(y, initial_guess, delta_x, target_residual, max_iterations=20):
+    # Use Newton's method to find the root of a function
+
+    # Args: y - function (dependent variable)
+    #       initial_guess - initial guess for the root
+    #       delta_x - step size for the derivative
+    #       target_residual - target residual for the function
+    #       max_iterations - maximum number of iterations
+    # Returns: root - the root of the function
+
+    guesses = []
+
+    root = initial_guess
     iterations = 0
-    while (np.abs(pressure_result-P) > 0.00000001 and iterations < 20):
-        # print(f"rho: {rho_guess}, P: {pressure_result}")
-
-        pressure_result = region3_pressure(rho_guess, T)
-        delta_pressure = region3_pressure(
-            rho_guess+delta_rho, T) - pressure_result
-        rho_guess = rho_guess - (pressure_result-P)/(delta_pressure/delta_rho)
-        pressure_result = region3_pressure(rho_guess, T)
+    while (np.abs(y(root)) > target_residual and iterations < max_iterations):
+        delta_y = y(root+delta_x) - y(root)
+        guesses.append([y(root), root, delta_y, delta_x, iterations])
+        root = root - y(root)/(delta_y/delta_x)
         iterations += 1
 
-    # print(f"rho: {rho_guess}, P: {pressure_result}")
-    return rho_guess
+    if iterations >= max_iterations:
+        print(f"Root not found after {max_iterations} iterations")
+        print(guesses)
+
+    return root
 
 
 def region3_pressure(rho, T):
