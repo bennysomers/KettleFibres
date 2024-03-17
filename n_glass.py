@@ -18,12 +18,14 @@ def calculate_coefficients(T):
     return coefficients
 
 
-def calculate_refractive_index(wavelength, T):
+def refractive_index(wavelength, T):
     # Calculates the refractive index of a material using the Sellmeier equation
     #
     # Args: wavelength - wavelength of light in nm
-    #       coefficients - list of coefficients for the Sellmeier equation
+    #       temperature - temperature in Kelvin
     # Returns: n - refractive index of the material at the given wavelength
+
+    T = T - 273.15  # convert to degrees Celsius
 
     coefficients = calculate_coefficients(T)
 
@@ -44,7 +46,7 @@ def main():
     wavelength = 1550
     refractive_index = np.zeros(len(T))
     for i in range(len(T)):
-        refractive_index[i] = calculate_refractive_index(wavelength, T[i])
+        refractive_index[i] = refractive_index(wavelength, T[i])
 
     plt.plot(T, refractive_index)
     plt.title('Refractive Index of SiO2 Glass at 1550nm')

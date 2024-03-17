@@ -4,6 +4,7 @@ import n_glass
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import math
 
 # print(iapws.saturation_pressure(425.15))
 # print(iapws.saturation_pressure(433.15))
@@ -77,6 +78,24 @@ def plot_reflectance(reflectance, P, T):
     plt.contour(T, P, reflectance_dB, colors='k', linewidths=0.5,
                 linestyles='solid', levels=levels,  hold=True)
     plt.title(r'Reflectance @ $1550nm$')
+    plt.xlabel(r'Temperature ($\degree C$)')
+    plt.ylabel(r'Pressure ($MPa$)')
+    plt.show()
+
+
+def plot_delta_reflectance(reflectance, P, T):
+    reflectance_dB = 10*np.log10(reflectance)
+    plt.figure(figsize=(12, 6))
+    levels = np.linspace(min(reflectance_dB[~np.isnan(reflectance_dB)].flatten()),
+                         max(reflectance_dB[~np.isnan(reflectance_dB)].flatten()), 1000)
+    plt.contourf(T, P, reflectance_dB, cmap='jet', levels=levels, hold=True)
+    plt.colorbar(ticks=range(round(min(reflectance_dB[~np.isnan(reflectance_dB)].flatten())), round(max(
+        reflectance_dB[~np.isnan(reflectance_dB)].flatten()))), label=r"Reflectance error ($dB$)")
+    levels = np.linspace(min(reflectance_dB[~np.isnan(reflectance_dB)].flatten()),
+                         max(reflectance_dB[~np.isnan(reflectance_dB)].flatten()), 21)
+    plt.contour(T, P, reflectance_dB, colors='k', linewidths=0.5,
+                linestyles='solid', levels=levels,  hold=True)
+    plt.title(r'Error in Reflectance due to constant $n_{glass}$ @ $1550nm$')
     plt.xlabel(r'Temperature ($\degree C$)')
     plt.ylabel(r'Pressure ($MPa$)')
     plt.show()
@@ -168,9 +187,13 @@ nu = np.zeros((nBins, nBins))
 rho = np.zeros((nBins, nBins))
 _n_water = np.zeros((nBins, nBins))
 _n_glass = np.zeros(nBins)
+_n_glass_constant = np.zeros(nBins)
 _reflectance = np.zeros((nBins, nBins))
+_reflectance_constant_glass = np.zeros((nBins, nBins))
+delta_reflectance = np.zeros((nBins, nBins))
 for j in tqdm(range(nBins)):  # Temperature
-    _n_glass[j] = n_glass.calculate_refractive_index(1550, TCelsius[j])
+    _n_glass[j] = n_glass.refractive_index(1550, T[j])
+    _n_glass_constant[j] = n_glass.refractive_index(1550, 315+273.15)
     for i in range(nBins):  # Pressure
         rho[i, j] = iapws.density(P[i], T[j])
         nu[i, j] = 1 / rho[i, j]
@@ -179,15 +202,21 @@ for j in tqdm(range(nBins)):  # Temperature
             n_water.refractive_index_thormahlen(rho[i, j], T[j], 1550)
 
         _reflectance[i, j] = reflectance(_n_water[i, j], _n_glass[j])
+        _reflectance_constant_glass[i, j] = reflectance(
+            _n_water[i, j], _n_glass_constant[j])
+        delta_reflectance[i, j] = abs((_reflectance[i, j] -
+                                       _reflectance_constant_glass[i, j]) / _reflectance[i, j])
 
-plot_nu_rho(nu, rho, P, TCelsius)
+# plot_nu_rho(nu, rho, P, TCelsius)
 
-plot_n(_n_water, P, TCelsius)
+# plot_n(_n_water, P, TCelsius)
 
-plot_reflectance(_reflectance, P, TCelsius)
+# plot_reflectance(_reflectance, P, TCelsius)
 
-plot_temp_reflectance(_reflectance, TCelsius, P, P_desired=15)
+# plot_temp_reflectance(_reflectance, TCelsius, P, P_desired=15)
 
-plot_density_reflectance(_reflectance, rho, P, P_desired=15)
+# plot_density_reflectance(_reflectance, rho, P, P_desired=15)
 
-plot_specific_volume_reflectance(_reflectance, nu, P, P_desired=15)
+# plot_specific_volume_reflectance(_reflectance, nu, P, P_desired=15)
+
+plot_delta_reflectance(delta_reflectance, P, TCelsius)

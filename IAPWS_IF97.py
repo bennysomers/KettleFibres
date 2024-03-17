@@ -195,7 +195,7 @@ def region3_density(P, T):
     return rho
 
 
-def newtons_method(y, initial_guess, delta_x, target_residual, max_iterations=20):
+def newtons_method(y, initial_guess, delta_x=0.00000001, target_residual=0.0000000001, max_iterations=30):
     # Use Newton's method to find the root of a function
 
     # Args: y - function (dependent variable)
